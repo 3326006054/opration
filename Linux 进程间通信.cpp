@@ -13,7 +13,7 @@ struct msgform
 	long mtype;
 	char mtext[300];
 }msg;
-int msgqid, i, msgqid_1;
+int msgqid, i, msgqid_1;//新建一个消息队列，实现乒乓通信
 void CLIENT()
 {
 	int i, result;
