@@ -7,84 +7,92 @@
 #include <string>
 #include <sstream>
 struct Page_replace {
+    std::vector<int> page_order;
+
     struct Pages {
         int pages_num;
         int* page_arr;
         int top;
+
         bool is_full() {
-            if (this->top >= this->pages_num) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return (this->top >= this->pages_num) ? true : false;
         }
+
         void append(int page) {
             if (this->is_full()) return;
             this->page_arr[this->top] = page;
             (this->top)++;
         }
+
         void replace(int place, int page) {
             if (place >= this->pages_num) return;
             this->page_arr[place] = page;
         }
+
         int check_broken(int page) {
             for (int i = 0; i < this->top; i++) {
                 if (page == this->page_arr[i]) return i;
             }
-            if (this->is_full()) {
-                return -1;//发生缺页且驻留集已满
-            }
-            else {
-                return -2;//发生缺页且驻留集未满
-            }
+            return this->is_full() ? -1 : -2;
         }
+
         void clear() {
             this->top = 0;
         }
     }pages;
-    std::vector<int> page_order;
-    std::vector<bool> pages_broken;
+
     void init() {
-        //输入驻留集大小
-        std::cout << "输入驻留集数量" << std::endl;
+        std::cout << "输入驻留集数量：";
         std::cin >> this->pages.pages_num;
         getchar();
         this->pages.page_arr = new int[this->pages.pages_num];
         this->pages.top = 0;
-        std::cout << "输入页面访问顺序" << std::endl;
+        std::cout << "输入页面访问顺序：";
         std::string line;
         std::getline(std::cin, line);
         std::istringstream iss(line);
-        //输入访问页流
         int num;
         while (iss >> num) {
             this->page_order.push_back(num);
         }
-        //初始化缺页中断数组
+    }
+
+    void handle_pages_init(int**& pages_show, std::vector<bool>& pages_broken) {
+        for (int j = 0; j < this->pages.pages_num; j++) {
+            pages_show[j] = new int[this->page_order.size()];
+        }
         for (int i = 0; i < this->page_order.size(); i++) {
-            this->pages_broken.push_back(false);
+            pages_broken.push_back(false);
         }
     }
-    void show_pages() {
+
+    void handle_pages_show(int** pages_show, std::vector<bool> pages_broken) {
         std::vector<int>::iterator it;
-        //输出页流
+        std::cout << "页流：";
         for (it = this->page_order.begin(); it != this->page_order.end(); it++) {
             std::cout << *it << " ";
         }
-        std::cout << std::endl;
-    }
-    void show_broken() {
-        for (int i = 0; i < this->pages_broken.size(); i++) {
-            std::cout << this->pages_broken[i] << " ";
+        for (int j = 0; j < this->pages.pages_num; j++) {
+            std::cout << std::endl << "      ";
+            for (int i = 0; i < this->page_order.size(); i++) {
+                std::cout << (pages_show[j][i] > 0 ? std::to_string(pages_show[j][i]) + " " : "N ");
+            }
+        }
+        std::cout << std::endl << "缺页：";
+        for (int i = 0; i < pages_broken.size(); i++) {
+            std::cout << (pages_broken[i] ? "F " : "  ");
         }
         std::cout << std::endl;
+        this->pages.clear();
     }
+
     void OPT() {
-        std::cout << "OPT" << std::endl;
-        for(int i =0;i<this->page_order.size();i++){
+        int** pages_show = new int* [this->pages.pages_num];
+        std::vector<bool> pages_broken;
+        handle_pages_init(pages_show, pages_broken);
+        std::cout << std::endl << "OPT" << std::endl;
+        for (int i = 0; i < this->page_order.size(); i++) {
             //驻留集未满
-            
             int broken = 1;
             for (int j = 0; j < this->pages.top; j++) {
                 if (this->page_order[i] == this->pages.page_arr[j]) {
@@ -94,14 +102,14 @@ struct Page_replace {
                 if (j == this->pages.top - 1) broken = 1;
             }
             if (broken) {
-                this->pages_broken[i] = true;
+                pages_broken[i] = true;
                 if (this->pages.is_full()) {
                     //寻找需要替换的页面
                     int page = -1;
                     int distance_max = 0;
                     for (int j = 0; j < this->pages.top; j++) {//遍历驻留集
                         int distance_count = 0;//记录最远访问
-                        for (int k = i+1; k < this->page_order.size(); k++) {//遍历页流
+                        for (int k = i + 1; k < this->page_order.size(); k++) {//遍历页流
                             distance_count++;
                             if (this->page_order[k] == this->pages.page_arr[j]) break;//未来最近访问
                         }
@@ -111,23 +119,28 @@ struct Page_replace {
                         }
                     }
                     this->pages.replace(page, this->page_order[i]);
-                    std::cout << "时刻"<< i << " 替换" << page << "->" << this->page_order[i] << std::endl;
+                    std::cout << "时刻" << i << " 替换" << page << "->" << this->page_order[i] << std::endl;
                 }
                 else {
                     this->pages.append(this->page_order[i]);
-                    std::cout << "时刻" << i  << " " << this->page_order[i] << " 加入" << std::endl;
+                    std::cout << "时刻" << i << " " << this->page_order[i] << " 加入" << std::endl;
                 }
             }
             else {
-                this->pages_broken[i] = false;
+                pages_broken[i] = false;
+            }
+            for (int j = 0; j < this->pages.top; j++) {
+                pages_show[j][i] = this->pages.page_arr[j];
             }
         }
-        this->show_pages();
-        this->show_broken();
-        this->pages.clear();
+        this->handle_pages_show(pages_show, pages_broken);
     }
+
     void FIFO() {
-        std::cout << "FIFO" << std::endl;
+        int** pages_show = new int* [this->pages.pages_num];
+        std::vector<bool> pages_broken;
+        handle_pages_init(pages_show, pages_broken);
+        std::cout << std::endl << "FIFO" << std::endl;
         int* distance = new int[this->pages.pages_num];
         for (int i = 0; i < this->pages.pages_num; i++) {
             distance[i] = 0;
@@ -146,26 +159,31 @@ struct Page_replace {
                 distance[page_replace] = 0;
                 std::cout << "时刻" << i << " 替换" << this->pages.page_arr[page_replace] << "->" << this->page_order[i] << std::endl;
                 this->pages.replace(page_replace, this->page_order[i]);
-                this->pages_broken[i] = true;
+                pages_broken[i] = true;
             }
             else if (page == -2) {//发生缺页，且驻留集未满
                 std::cout << "时刻" << i << " " << this->page_order[i] << " 加入" << std::endl;
                 this->pages.append(this->page_order[i]);
-                this->pages_broken[i] = true;
+                pages_broken[i] = true;
             }
-            else this->pages_broken[i] = false;
+            else pages_broken[i] = false;
             //else distance[page] = 0;
             for (int j = 0; j < this->pages.top; j++) {
                 (distance[j])++;
             }
+            for (int j = 0; j < this->pages.top; j++) {
+                pages_show[j][i] = this->pages.page_arr[j];
+            }
         }
-        this->show_pages();
-        this->show_broken();
-        this->pages.clear();
+        this->handle_pages_show(pages_show, pages_broken);
         delete distance;
     }
+
     void LRU() {
-        std::cout << "LRU" << std::endl;
+        int** pages_show = new int* [this->pages.pages_num];
+        std::vector<bool> pages_broken;
+        handle_pages_init(pages_show, pages_broken);
+        std::cout << std::endl << "LRU" << std::endl;
         int* distance = new int[this->pages.pages_num];
         for (int i = 0; i < this->pages.pages_num; i++) {
             distance[i] = 0;
@@ -184,14 +202,14 @@ struct Page_replace {
                 distance[page_replace] = 0;
                 std::cout << "时刻" << i << " 替换" << this->pages.page_arr[page_replace] << "->" << this->page_order[i] << std::endl;
                 this->pages.replace(page_replace, this->page_order[i]);
-                this->pages_broken[i] = true;
+                pages_broken[i] = true;
             }
             else if (page == -2) {//发生缺页，且驻留集未满
                 std::cout << "时刻" << i << " " << this->page_order[i] << " 加入" << std::endl;
                 this->pages.append(this->page_order[i]);
-                this->pages_broken[i] = true;
+                pages_broken[i] = true;
             }
-            else this->pages_broken[i] = false;
+            else pages_broken[i] = false;
 
             for (int j = 0; j < this->pages.top; j++) {
                 (distance[j])++;
@@ -199,15 +217,19 @@ struct Page_replace {
                     distance[j] = 0;
                 }
             }
-
+            for (int j = 0; j < this->pages.top; j++) {
+                pages_show[j][i] = this->pages.page_arr[j];
+            }
         }
-        this->show_pages();
-        this->show_broken();
-        this->pages.clear();
+        this->handle_pages_show(pages_show, pages_broken);
         delete distance;
     }
+
     void CLOCK() {
-        std::cout << "CLOCK" << std::endl;
+        int** pages_show = new int* [this->pages.pages_num];
+        std::vector<bool> pages_broken;
+        handle_pages_init(pages_show, pages_broken);
+        std::cout << std::endl << "CLOCK" << std::endl;
         int* visit = new int[this->pages.pages_num];
         for (int i = 0; i < this->pages.pages_num; i++) {
             visit[i] = 0;
@@ -221,7 +243,7 @@ struct Page_replace {
                     if (visit[point] == 0) {
                         std::cout << "时刻" << i << " 替换" << this->pages.page_arr[point] << "->" << this->page_order[i] << std::endl;
                         this->pages.replace(point, this->page_order[i]);
-                        this->pages_broken[i] = true;
+                        pages_broken[i] = true;
                         visit[point] = 1;
                         find = 1;
                     }
@@ -239,17 +261,18 @@ struct Page_replace {
                 point++;
                 point = point % this->pages.pages_num;
                 this->pages.append(this->page_order[i]);
-                this->pages_broken[i] = true;
+                pages_broken[i] = true;
             }
             else {
                 std::cout << "时刻" << i << " " << this->pages.page_arr[page] << " 访问" << std::endl;
                 visit[page] = 1;
-                this->pages_broken[i] = false;
+                pages_broken[i] = false;
+            }
+            for (int j = 0; j < this->pages.top; j++) {
+                pages_show[j][i] = this->pages.page_arr[j];
             }
         }
-        this->show_pages();
-        this->show_broken();
-        this->pages.clear();
+        this->handle_pages_show(pages_show, pages_broken);
         delete visit;
     }
 };
@@ -263,5 +286,3 @@ int main()
     P.FIFO();
     P.CLOCK();
 }
-
-
