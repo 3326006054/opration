@@ -81,6 +81,7 @@ struct Page_replace {
         std::cout << std::endl;
     }
     void OPT() {
+        std::cout << "OPT" << std::endl;
         for(int i =0;i<this->page_order.size();i++){
             //驻留集未满
             
@@ -126,6 +127,7 @@ struct Page_replace {
         this->pages.clear();
     }
     void FIFO() {
+        std::cout << "FIFO" << std::endl;
         int* distance = new int[this->pages.pages_num];
         for (int i = 0; i < this->pages.pages_num; i++) {
             distance[i] = 0;
@@ -163,6 +165,7 @@ struct Page_replace {
         delete distance;
     }
     void LRU() {
+        std::cout << "LRU" << std::endl;
         int* distance = new int[this->pages.pages_num];
         for (int i = 0; i < this->pages.pages_num; i++) {
             distance[i] = 0;
@@ -204,6 +207,7 @@ struct Page_replace {
         delete distance;
     }
     void CLOCK() {
+        std::cout << "CLOCK" << std::endl;
         int* visit = new int[this->pages.pages_num];
         for (int i = 0; i < this->pages.pages_num; i++) {
             visit[i] = 0;
@@ -254,6 +258,9 @@ int main()
 {
     Page_replace P;
     P.init();
+    P.OPT();
+    P.LRU();
+    P.FIFO();
     P.CLOCK();
 }
 
