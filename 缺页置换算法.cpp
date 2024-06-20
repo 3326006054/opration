@@ -1,4 +1,4 @@
-﻿// 缺页置换算法.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+// 缺页置换算法.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
 #include <iostream>
@@ -218,8 +218,8 @@ struct Page_replace {
                         std::cout << "时刻" << i << " 替换" << this->pages.page_arr[point] << "->" << this->page_order[i] << std::endl;
                         this->pages.replace(point, this->page_order[i]);
                         this->pages_broken[i] = true;
+                        visit[point] = 1;
                         find = 1;
-                        break;
                     }
                     else {
                         visit[point] = 0;
@@ -231,6 +231,9 @@ struct Page_replace {
             }
             else if (page == -2) {//发生缺页，且驻留集未满
                 std::cout << "时刻" << i << " " << this->page_order[i] << " 加入" << std::endl;
+                visit[point] = 1;
+                point++;
+                point = point % this->pages.pages_num;
                 this->pages.append(this->page_order[i]);
                 this->pages_broken[i] = true;
             }
